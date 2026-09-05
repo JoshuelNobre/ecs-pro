@@ -62,3 +62,31 @@ variable "node_volume_size" {
 variable "node_volume_type" {
   description = "The type of the EBS volume for the ECS nodes"
 }
+
+variable "cluster_on_demand_min_size" {
+  description = "The minimum size of the on-demand ECS cluster"
+}
+
+variable "cluster_on_demand_max_size" {
+  description = "The maximum size of the on-demand ECS cluster"
+}
+
+variable "cluster_on_demand_desired_capacity" {
+  description = "The desired capacity of the on-demand ECS cluster"
+}
+
+variable "cluster_spot_min_size" {
+  description = "The minimum size of the spot ECS cluster"
+}
+
+variable "cluster_spot_max_size" {
+  description = "The maximum size of the spot ECS cluster"
+}
+
+variable "cluster_spot_desired_capacity" {
+  description = "The desired capacity of the spot ECS cluster"
+}
+
+variable "spot_max_price" {
+  description = "The maximum price for spot instances"
+}

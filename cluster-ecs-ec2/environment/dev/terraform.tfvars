@@ -18,5 +18,15 @@ load_balancer_type     = "application"
 # ECS General
 node_ami           = "ami-0f60dc6bf6dbca3e9"
 node_instance_type = "t3.medium"
-node_volume_size   = 20
+node_volume_size   = 30
 node_volume_type   = "gp3"
+
+# ECS Cluster
+cluster_on_demand_min_size         = 2
+cluster_on_demand_max_size         = 4
+cluster_on_demand_desired_capacity = 2
+
+cluster_spot_min_size         = 2
+cluster_spot_max_size         = 4
+cluster_spot_desired_capacity = 2
+spot_max_price                = "0.05"
