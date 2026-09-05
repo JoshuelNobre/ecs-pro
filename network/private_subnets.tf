@@ -27,3 +27,57 @@ resource "aws_subnet" "private_subnet_1c" {
     Name = format("%s-private-subnet-1c", var.project_name)
   }
 }
+
+resource "aws_route_table" "private_nat_access_1a" {
+  vpc_id = aws_vpc.main.id
+  tags = {
+    Name = format("%s-private-nat-access-1a", var.project_name)
+  }
+}
+
+resource "aws_route_table" "private_nat_access_1b" {
+  vpc_id = aws_vpc.main.id
+  tags = {
+    Name = format("%s-private-nat-access-1b", var.project_name)
+  }
+}
+
+resource "aws_route_table" "private_nat_access_1c" {
+  vpc_id = aws_vpc.main.id
+  tags = {
+    Name = format("%s-private-nat-access-1c", var.project_name)
+  }
+}
+
+resource "aws_route" "private_nat_1a" {
+  route_table_id         = aws_route_table.private_nat_access_1a.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_nat_gateway.vpc_nat_gw_1a.id
+}
+
+resource "aws_route" "private_nat_1b" {
+  route_table_id         = aws_route_table.private_nat_access_1b.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_nat_gateway.vpc_nat_gw_1b.id
+}
+
+resource "aws_route" "private_nat_1c" {
+  route_table_id         = aws_route_table.private_nat_access_1c.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_nat_gateway.vpc_nat_gw_1c.id
+}
+
+resource "aws_route_table_association" "private_subnet_1a" {
+  subnet_id      = aws_subnet.private_subnet_1a.id
+  route_table_id = aws_route_table.private_nat_access_1a.id
+}
+
+resource "aws_route_table_association" "private_subnet_1b" {
+  subnet_id      = aws_subnet.private_subnet_1b.id
+  route_table_id = aws_route_table.private_nat_access_1b.id
+}
+
+resource "aws_route_table_association" "private_subnet_1c" {
+  subnet_id      = aws_subnet.private_subnet_1c.id
+  route_table_id = aws_route_table.private_nat_access_1c.id
+}
