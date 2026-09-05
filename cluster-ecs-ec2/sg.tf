@@ -4,11 +4,11 @@ resource "aws_security_group" "main" {
   vpc_id      = data.aws_ssm_parameter.vpc_id.value
 
   egress {
-    description = "Allow all outbound traffic to VPC"
+    description = "Allow all outbound traffic (required by the ECS agent)"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = [data.aws_ssm_parameter.vpc_cidr.value]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
