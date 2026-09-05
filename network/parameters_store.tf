@@ -57,3 +57,9 @@ resource "aws_ssm_parameter" "database_subnet_1c_id" {
   type  = "String"
   value = aws_subnet.database_subnet_1c.id
 }
+
+resource "aws_ssm_parameter" "vpc_cidr" {
+  name  = format("/%s/vpc-cidr", var.project_name)
+  type  = "String"
+  value = aws_vpc.main.cidr_block
+}
