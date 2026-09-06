@@ -1,0 +1,11 @@
+region                = "us-east-1"
+cluster_name          = "ecs-pro-app-cluster"
+service_name          = "ecs-pro-app-service"
+service_port          = 8080
+service_cpu           = 256
+service_memory        = 512
+ssm_listener          = "/cluster-ecs-ec2/lb-listener-arn"
+ssm_vpc_id            = "/ecs-pro-network/vpc-id"
+ssm_private_subnet_1a = "/ecs-pro-network/private-subnet-1a-id"
+ssm_private_subnet_1b = "/ecs-pro-network/private-subnet-1b-id"
+ssm_private_subnet_1c = "/ecs-pro-network/private-subnet-1c-id"  
