@@ -1,5 +1,5 @@
 module "service" {
-  source = "/home/joshu/ecs-pro/service-module"
+  source = "../../service-module"
 
   cluster_name                = var.cluster_name
   service_name                = var.service_name
