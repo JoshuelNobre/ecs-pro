@@ -1,4 +1,4 @@
-resource "aws_alb_target_group" "name" {
+resource "aws_lb_target_group" "main" {
 
   name = format("%s-%s", var.cluster_name, var.service_name)
 
