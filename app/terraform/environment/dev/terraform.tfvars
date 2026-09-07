@@ -8,4 +8,26 @@ ssm_listener          = "/cluster-ecs-ec2/lb-listener-arn"
 ssm_vpc_id            = "/ecs-pro-network/vpc-id"
 ssm_private_subnet_1a = "/ecs-pro-network/private-subnet-1a-id"
 ssm_private_subnet_1b = "/ecs-pro-network/private-subnet-1b-id"
-ssm_private_subnet_1c = "/ecs-pro-network/private-subnet-1c-id"  
+ssm_private_subnet_1c = "/ecs-pro-network/private-subnet-1c-id"
+environment_variables = [
+  {
+    name  = "ENVIRONMENT"
+    value = "dev"
+  },
+  {
+    name  = "LOG_LEVEL"
+    value = "debug"
+  },
+]
+
+capabilities = ["EC2"]
+
+service_health_check = {
+  path                = "/healthcheck"
+  interval            = 30
+  timeout             = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 2
+  matcher             = "200-399"
+  port                = 8080
+}

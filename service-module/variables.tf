@@ -1,3 +1,8 @@
+variable "region" {
+  type        = string
+  description = "Região onde os recursos do AWS serão provisionados."
+}
+
 variable "service_name" {
   description = "The name of the service."
   type        = string
@@ -33,7 +38,29 @@ variable "service_memory" {
   type        = number
 }
 
+variable "service_health_check" {
+  description = "The health check configuration for the service target group."
+  type = object({
+    path                = string
+    interval            = number
+    timeout             = number
+    healthy_threshold   = number
+    unhealthy_threshold = number
+    matcher             = string
+    port                = number
+  })
+}
+
 variable "service_listener" {}
 
 variable "service_task_execution_role" {
+}
+
+variable "environment_variables" {
+  description = "A list of environment variables to set in the container."
+}
+
+variable "capabilities" {
+  description = "A list of capabilities to add to the container."
+  type        = list(string)
 }

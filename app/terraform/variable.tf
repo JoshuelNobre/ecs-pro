@@ -28,6 +28,19 @@ variable "service_memory" {
   type        = number
 }
 
+variable "service_health_check" {
+  description = "The health check configuration for the ECS service target group."
+  type = object({
+    path                = string
+    interval            = number
+    timeout             = number
+    healthy_threshold   = number
+    unhealthy_threshold = number
+    matcher             = string
+    port                = number
+  })
+}
+
 variable "ssm_listener" {
   description = "The listener configuration for the ECS service."
   type        = any
@@ -51,4 +64,12 @@ variable "ssm_private_subnet_1b" {
 variable "ssm_private_subnet_1c" {
   description = "The ID of the private subnet in availability zone 1c."
   type        = string
+}
+
+variable "environment_variables" {
+  description = "A list of environment variables to set in the container."
+}
+
+variable "capabilities" {
+  description = "A list of capabilities to add to the container."
 }
