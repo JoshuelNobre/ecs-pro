@@ -1,6 +1,6 @@
 region                = "us-east-1"
-cluster_name          = "ecs-pro-app-cluster"
-service_name          = "ecs-pro-app-service"
+cluster_name          = "cluster-ecs-ec2"
+service_name          = "app-service"
 service_port          = 8080
 service_cpu           = 256
 service_memory        = 512
