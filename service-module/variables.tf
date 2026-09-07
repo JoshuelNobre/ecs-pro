@@ -64,3 +64,17 @@ variable "capabilities" {
   description = "A list of capabilities to add to the container."
   type        = list(string)
 }
+
+variable "service_launch_type" {
+
+  description = "The launch type for the service."
+  type        = string
+}
+
+variable "service_task_count" {
+  description = "The number of tasks to run for the service."
+  type        = number
+}
+
+variable "service_hosts" {}
+

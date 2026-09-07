@@ -73,3 +73,14 @@ variable "environment_variables" {
 variable "capabilities" {
   description = "A list of capabilities to add to the container."
 }
+
+variable "service_launch_type" {
+
+}
+
+variable "service_task_count" {
+  description = "The number of tasks to run for the service."
+  type        = number
+}
+
+variable "service_hosts" {}
