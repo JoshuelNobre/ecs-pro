@@ -78,3 +78,81 @@ variable "service_task_count" {
 
 variable "service_hosts" {}
 
+variable "scale_type" {}
+
+variable "task_minimum" {}
+
+variable "task_maximum" {}
+
+# Autoscaling CPU
+
+variable "scale_out_cpu_threshold" {
+  description = "The CPU utilization threshold for scaling out the service."
+  type        = number
+}
+
+variable "scale_out_adjustment" {
+  description = "The number of tasks to add when scaling out the service."
+  type        = number
+}
+
+variable "scale_out_comparison_operator" {
+  description = "The comparison operator for scaling out the service."
+  type        = string
+}
+
+variable "scale_out_statistic" {
+  description = "The statistic to use for scaling out the service."
+  type        = string
+}
+
+variable "scale_out_period" {
+  description = "The number of evaluation periods for scaling out the service."
+  type        = number
+}
+
+variable "scale_out_evaluation_periods" {
+  description = "The number of evaluation periods for scaling out the service."
+  type        = number
+}
+
+variable "scale_out_cooldown" {
+  description = "The cooldown period (in seconds) after scaling out the service."
+  type        = number
+}
+
+###
+variable "scale_in_cpu_threshold" {
+  description = "The CPU utilization threshold for scaling in the service."
+  type        = number
+}
+
+variable "scale_in_adjustment" {
+  description = "The number of tasks to add when scaling in the service."
+  type        = number
+}
+
+variable "scale_in_comparison_operator" {
+  description = "The comparison operator for scaling in the service."
+  type        = string
+}
+
+variable "scale_in_statistic" {
+  description = "The statistic to use for scaling in the service."
+  type        = string
+}
+
+variable "scale_in_period" {
+  description = "The number of evaluation periods for scaling in the service."
+  type        = number
+}
+
+variable "scale_in_evaluation_periods" {
+  description = "The number of evaluation periods for scaling in the service."
+  type        = number
+}
+
+variable "scale_in_cooldown" {
+  description = "The cooldown period (in seconds) after scaling in the service."
+  type        = number
+}

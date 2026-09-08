@@ -37,3 +37,30 @@ service_health_check = {
   matcher             = "200-399"
   port                = 8080
 }
+
+scale_type = "cpu"
+
+task_minimum = 3
+
+task_maximum = 12
+
+# Autoscaling cpu
+
+
+scale_out_cpu_threshold       = 70
+scale_out_adjustment          = 2
+scale_out_comparison_operator = "GreaterThanOrEqualToThreshold"
+scale_out_statistic           = "Average"
+scale_out_period              = 60
+scale_out_evaluation_periods  = 2
+scale_out_cooldown            = 60
+
+#
+
+scale_in_cpu_threshold       = 30
+scale_in_adjustment          = -1
+scale_in_comparison_operator = "LessThanOrEqualToThreshold"
+scale_in_statistic           = "Average"
+scale_in_period              = 60
+scale_in_evaluation_periods  = 2
+scale_in_cooldown            = 60
