@@ -162,3 +162,19 @@ variable "scale_in_cooldown" {
   description = "The cooldown period (in seconds) after scaling in the service."
   type        = number
 }
+
+# Tracking CPU
+variable "scale_tracking_cpu" {
+  description = "The CPU utilization metric to track for scaling the service."
+  type        = string
+}
+
+variable "scale_tracking_request" {
+  description = "The request count metric to track for scaling the service."
+  type        = string
+}
+
+variable "ssm_alb_arn" {
+  description = "The ARN of the Application Load Balancer (ALB) to use for scaling based on request count."
+  type        = string
+}

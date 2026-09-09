@@ -13,6 +13,7 @@ ssm_vpc_id            = "/ecs-pro-network/vpc-id"
 ssm_private_subnet_1a = "/ecs-pro-network/private-subnet-1a-id"
 ssm_private_subnet_1b = "/ecs-pro-network/private-subnet-1b-id"
 ssm_private_subnet_1c = "/ecs-pro-network/private-subnet-1c-id"
+ssm_alb_arn           = "/cluster-ecs-ec2/lb-arn"
 service_hosts         = ["app-service.joshuel.com"]
 
 environment_variables = [
@@ -38,7 +39,7 @@ service_health_check = {
   port                = 8080
 }
 
-scale_type = "cpu"
+scale_type = "requests_tracking"
 
 task_minimum = 3
 
@@ -64,3 +65,5 @@ scale_in_statistic           = "Average"
 scale_in_period              = 60
 scale_in_evaluation_periods  = 2
 scale_in_cooldown            = 60
+scale_tracking_cpu           = 50
+scale_tracking_request       = 100

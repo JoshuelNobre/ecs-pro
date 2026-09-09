@@ -78,81 +78,121 @@ variable "service_task_count" {
 
 variable "service_hosts" {}
 
-variable "scale_type" {}
+variable "scale_type" {
+  default = null
+}
 
-variable "task_minimum" {}
+variable "task_minimum" {
+  default = 1
+}
 
-variable "task_maximum" {}
+variable "task_maximum" {
+  default = 10
+}
 
 # Autoscaling CPU
 
 variable "scale_out_cpu_threshold" {
   description = "The CPU utilization threshold for scaling out the service."
   type        = number
+  default     = 80
 }
 
 variable "scale_out_adjustment" {
   description = "The number of tasks to add when scaling out the service."
   type        = number
+  default     = 1
 }
 
 variable "scale_out_comparison_operator" {
   description = "The comparison operator for scaling out the service."
   type        = string
+  default     = "GreaterThanOrEqualToThreshold"
 }
 
 variable "scale_out_statistic" {
   description = "The statistic to use for scaling out the service."
   type        = string
+  default     = "Average"
 }
 
 variable "scale_out_period" {
   description = "The number of evaluation periods for scaling out the service."
   type        = number
+  default     = 60
 }
 
 variable "scale_out_evaluation_periods" {
   description = "The number of evaluation periods for scaling out the service."
   type        = number
+  default     = 2
 }
 
 variable "scale_out_cooldown" {
   description = "The cooldown period (in seconds) after scaling out the service."
   type        = number
+  default     = 60
 }
 
 ###
 variable "scale_in_cpu_threshold" {
   description = "The CPU utilization threshold for scaling in the service."
   type        = number
+  default     = 30
 }
 
 variable "scale_in_adjustment" {
   description = "The number of tasks to add when scaling in the service."
   type        = number
+  default     = -1
 }
 
 variable "scale_in_comparison_operator" {
   description = "The comparison operator for scaling in the service."
   type        = string
+  default     = "LessThanOrEqualToThreshold"
 }
 
 variable "scale_in_statistic" {
   description = "The statistic to use for scaling in the service."
   type        = string
+  default     = "Average"
 }
 
 variable "scale_in_period" {
   description = "The number of evaluation periods for scaling in the service."
   type        = number
+  default     = 120
 }
 
 variable "scale_in_evaluation_periods" {
   description = "The number of evaluation periods for scaling in the service."
   type        = number
+  default     = 3
 }
 
 variable "scale_in_cooldown" {
   description = "The cooldown period (in seconds) after scaling in the service."
   type        = number
+  default     = 120
+}
+
+# Tracking CPU
+variable "scale_tracking_cpu" {
+  description = "The CPU utilization metric to track for scaling the service."
+  type        = string
+  default     = 80
+}
+
+# Tracking request
+variable "alb_arn" {
+  description = "The ARN of the Application Load Balancer to track for scaling the service."
+  type        = string
+  default     = null
+}
+
+variable "scale_tracking_request" {
+  description = "The request count metric to track for scaling the service."
+  type        = string
+  default     = 0
 }
