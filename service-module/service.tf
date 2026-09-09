@@ -21,6 +21,11 @@ resource "aws_ecs_service" "main" {
     rollback = true
   }
 
+  ordered_placement_strategy {
+    type  = "spread"
+    field = "attribute:ecs.availability-zone"
+  }
+
   network_configuration {
     subnets          = var.private_subnets
     security_groups  = [aws_security_group.main.id]
