@@ -1,19 +1,28 @@
 region         = "us-east-1"
-cluster_name   = "cluster-ecs-ec2"
+cluster_name   = "cluster-ecs-fargate"
 service_name   = "app-service"
 service_port   = 8080
 service_cpu    = 256
 service_memory = 512
 
-service_launch_type = "EC2"
+service_launch_type = [
+  {
+    capacity_provider = "FARGATE"
+    weight            = 50
+  },
+  {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 50
+  }
+]
 
 service_task_count    = 3
-ssm_listener          = "/cluster-ecs-ec2/lb-listener-arn"
+ssm_listener          = "/cluster-ecs-fargate/lb-listener-arn"
 ssm_vpc_id            = "/ecs-pro-network/vpc-id"
 ssm_private_subnet_1a = "/ecs-pro-network/private-subnet-1a-id"
 ssm_private_subnet_1b = "/ecs-pro-network/private-subnet-1b-id"
 ssm_private_subnet_1c = "/ecs-pro-network/private-subnet-1c-id"
-ssm_alb_arn           = "/cluster-ecs-ec2/lb-arn"
+ssm_alb_arn           = "/cluster-ecs-fargate/lb-arn"
 service_hosts         = ["app-service.joshuel.com"]
 
 environment_variables = [
@@ -27,7 +36,7 @@ environment_variables = [
   },
 ]
 
-capabilities = ["EC2"]
+capabilities = ["FARGATE"]
 
 service_health_check = {
   path                = "/healthcheck"

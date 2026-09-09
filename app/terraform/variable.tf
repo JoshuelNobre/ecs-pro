@@ -75,7 +75,11 @@ variable "capabilities" {
 }
 
 variable "service_launch_type" {
-
+  description = "Configuração dos Launch Types pelos capacity providers disponíveis no cluster"
+  type = list(object({
+    capacity_provider = string
+    weight            = number
+  }))
 }
 
 variable "service_task_count" {

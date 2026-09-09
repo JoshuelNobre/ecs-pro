@@ -65,10 +65,22 @@ variable "capabilities" {
   type        = list(string)
 }
 
-variable "service_launch_type" {
+# variable "service_launch_type" {
 
-  description = "The launch type for the service."
-  type        = string
+#   description = "The launch type for the service."
+#   type        = string
+# }
+
+variable "service_launch_type" {
+  description = "Configuração dos Launch Types pelos capacity providers disponíveis no cluster"
+  type = list(object({
+    capacity_provider = string
+    weight            = number
+  }))
+  default = [{
+    capacity_provider = "SPOT"
+    weight            = 100
+  }]
 }
 
 variable "service_task_count" {
