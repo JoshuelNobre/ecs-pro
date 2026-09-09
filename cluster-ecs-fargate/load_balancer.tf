@@ -42,8 +42,11 @@ resource "aws_lb" "main" {
     data.aws_ssm_parameter.public_subnet_1b_id.value,
     data.aws_ssm_parameter.public_subnet_1c_id.value,
   ]
-  enable_deletion_protection       = false
-  enable_cross_zone_load_balancing = false
+  enable_deletion_protection = false
+
+  # Application load balancers are always cross-zone, so the setting only
+  # carries a value for network load balancers.
+  enable_cross_zone_load_balancing = var.load_balancer_type == "network" ? var.load_balancer_cross_zone_enabled : true
 
   tags = {
     Name = format("%s-ingress", var.project_name)
