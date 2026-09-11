@@ -1,6 +1,6 @@
 resource "aws_lb_target_group" "main" {
 
-  name = format("%s-%s", var.cluster_name, var.service_name)
+  name = substr(format("%s%s", var.cluster_name, var.service_name), 0, 32)
 
   port        = var.service_port
   protocol    = "HTTP"
@@ -16,8 +16,10 @@ resource "aws_lb_target_group" "main" {
     unhealthy_threshold = lookup(var.service_health_check, "unhealthy_threshold", "3")
   }
 
+  # o target group fica preso ao listener rule e ao ECS service enquanto
+  # existir, então o novo precisa nascer antes de o antigo ser removido
   lifecycle {
-    create_before_destroy = false
+    create_before_destroy = true
   }
 
 }
