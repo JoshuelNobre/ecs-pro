@@ -1,0 +1,165 @@
+name: CI/CD Pipeline - Dev
+
+on:
+  push:
+    branches:
+      - main
+
+# um deploy por vez: applies concorrentes disputariam o lock do state
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+# id-token é obrigatório para o OIDC assumir o role
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  # ambiente fixo enquanto tudo sai da main. Quando houver uma branch por
+  # ambiente, trocar por ${{ github.ref_name }} e remover esta variável
+  ENVIRONMENT: "dev"
+
+  AWS_ACCOUNT: "550094086634"
+  AWS_REGION: "us-east-1"
+  CLUSTER_NAME: "cluster-ecs-fargate"
+  SERVICE_NAME: "app-service"
+  REPOSITORY_NAME: "linuxtips/ecs-pro-app"
+  TERRAFORM_VERSION: "1.14.1"
+  APP_DIR: ./app/app
+  TERRAFORM_DIR: ./app/terraform
+
+jobs:
+  ci-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: app/app/go.sum
+
+      - name: Install GoLint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
+
+      - name: Lint App
+        run: golangci-lint run ./... -E errcheck
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: Test App
+        run: go test -v ./...
+        working-directory: ${{ env.APP_DIR }}
+
+  ci-terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      # na raiz: alcança service-module e os demais módulos, fora de app/terraform
+      - name: Terraform fmt check
+        run: terraform fmt --recursive --check
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init -backend-config=environment/${ENVIRONMENT}/backend.tfvars
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+  build-publish:
+    runs-on: ubuntu-latest
+    needs:
+      - ci-app
+      - ci-terraform
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # o repositório é do pipeline, não do Terraform: a imagem precisa existir
+      # antes do apply, e o Terraform só recebe a URL pronta
+      - name: Create ECR repository if not exists
+        run: |
+          if aws ecr describe-repositories --repository-names "${REPOSITORY_NAME}" >/dev/null 2>&1; then
+            echo "Repositório ${REPOSITORY_NAME} já existe."
+          else
+            echo "Repositório ${REPOSITORY_NAME} não encontrado. Criando..."
+            aws ecr create-repository \
+              --repository-name "${REPOSITORY_NAME}" \
+              --image-scanning-configuration scanOnPush=true
+          fi
+
+      - name: Login to Amazon ECR Private
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and publish image
+        run: |
+          IMAGE="${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPOSITORY_NAME}:${GITHUB_SHA::8}"
+          docker build -t "${IMAGE}" .
+          docker push "${IMAGE}"
+        working-directory: ${{ env.APP_DIR }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - build-publish
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init -backend-config=environment/${ENVIRONMENT}/backend.tfvars
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file=environment/${ENVIRONMENT}/terraform.tfvars \
+            -var container_image=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPOSITORY_NAME}:${GITHUB_SHA::8}
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+      - name: Terraform Apply
+        run: |
+          terraform apply --auto-approve \
+            -var-file=environment/${ENVIRONMENT}/terraform.tfvars \
+            -var container_image=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPOSITORY_NAME}:${GITHUB_SHA::8}
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+      - name: ECS Wait Deployment Complete
+        run: |
+          aws ecs wait services-stable \
+            --cluster "${CLUSTER_NAME}" \
+            --services "${SERVICE_NAME}"
