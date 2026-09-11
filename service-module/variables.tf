@@ -212,3 +212,15 @@ variable "container_image" {
   description = "Fully qualified image the task runs, including the tag. Built and pushed by the pipeline, which owns the ECR repository."
   type        = string
 }
+
+variable "efs_volumes" {
+  description = "A list of EFS volumes to mount in the container."
+  type = list(object({
+    volume_name    = string
+    file_system_id = string
+    root_directory = string
+    container_path = string
+    read_only      = bool
+  }))
+  default = []
+}
