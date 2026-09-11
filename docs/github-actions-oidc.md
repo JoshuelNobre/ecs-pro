@@ -94,9 +94,12 @@ qualquer pessoa, pode assumir este role.
 
 Dois cuidados:
 
-- Use `StringEquals`, não `StringLike`. Com `StringLike` e um valor como
-  `repo:JoshuelNobre/*`, todos os seus repositórios ganham acesso.
-- Nunca omita a condição `sub` "para testar depois".
+- Nunca omita a condição `sub` "para testar depois". É a única coisa que separa
+  o seu repositório de todos os outros do GitHub.
+- Prefira `StringEquals` quando quiser amarrar a uma origem específica.
+  `StringLike` com curinga é uma escolha deliberada de escopo, não um atalho —
+  `repo:OWNER/*` dá a todos os seus repositórios o mesmo acesso. É o que está
+  aplicado aqui, e a seção *O que está aplicado hoje* explica a troca.
 
 ### O formato do `sub` depende do job
 
@@ -108,6 +111,22 @@ o job declara ou não um environment.
 | não declara environment | `repo:OWNER/REPO:ref:refs/heads/BRANCH` |
 | declara `environment: NOME` | `repo:OWNER/REPO:environment:NOME` |
 
+E existe uma segunda variação, que **não aparece na maioria dos guias**: quando
+o repositório usa *immutable identifiers*, o GitHub cola os IDs numéricos do
+owner e do repositório dentro do `sub`.
+
+```
+clássico:   repo:JoshuelNobre/ecs-pro:environment:dev
+imutável:   repo:JoshuelNobre@73402934/ecs-pro@1356606063:environment:dev
+```
+
+O formato existe para que renomear o repositório não transfira o acesso junto —
+os IDs não mudam. Mas um padrão escrito para a forma clássica, inclusive com
+curinga (`repo:OWNER/REPO:*`), **não casa**, porque o `@73402934` fica no meio.
+
+Este repositório usa a forma imutável. Para descobrir qual é o seu caso, veja
+a seção de erros no fim do documento: o valor real aparece no CloudTrail.
+
 Os jobs deste projeto declaram `environment: dev`, porque é lá que vive a
 variable — daí a trust policy acima usar a segunda forma. Se você remover o
 `environment:` do workflow, o token passa a apresentar a primeira forma e a
@@ -118,8 +137,8 @@ qualquer job rodando na `main`, só jobs que declaram `dev` conseguem assumir.
 
 ### O que está aplicado hoje
 
-Para não depender de acertar o formato exato, a trust policy em uso aceita
-qualquer origem dentro deste repositório:
+A trust policy em uso aceita qualquer repositório deste owner, nos dois
+formatos de `sub`:
 
 ```json
 "Condition": {
@@ -127,20 +146,26 @@ qualquer origem dentro deste repositório:
     "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
   },
   "StringLike": {
-    "token.actions.githubusercontent.com:sub": "repo:JoshuelNobre/ecs-pro:*"
+    "token.actions.githubusercontent.com:sub": [
+      "repo:JoshuelNobre@73402934/*",
+      "repo:JoshuelNobre/*"
+    ]
   }
 }
 ```
 
-O limite que mais importa continua de pé: nenhum outro repositório do GitHub
-consegue assumir o role. O que se abre mão é do isolamento interno — qualquer
-branch, environment ou pull request deste repositório passa a ter o mesmo
-acesso que a `main`.
+O limite que continua de pé é a conta do GitHub: nenhum repositório de outra
+pessoa consegue assumir o role. O que se abre mão é do isolamento interno —
+qualquer repositório, branch ou environment deste owner tem o mesmo acesso.
 
-Enquanto há um ambiente só e o repositório é seu, a diferença é pequena. Ela
-deixa de ser quando existir produção: aí vale voltar ao `StringEquals` da seção
-anterior, ou seguir o modelo de um role por ambiente descrito no fim deste
-documento.
+Vale lembrar que afrouxar a confiança **não** amplia as permissões: outro
+repositório que crie roles fora dos prefixos do passo 3 ainda vai receber
+`AccessDenied`.
+
+Enquanto os repositórios são todos seus e há um ambiente só, a diferença é
+pequena. Ela deixa de ser quando existir produção: aí vale voltar ao
+`StringEquals` da seção anterior, ou seguir o modelo de um role por ambiente
+descrito no fim deste documento.
 
 ## 3. Anexar permissões
 
@@ -177,9 +202,13 @@ cat > /tmp/iam-limitada.json <<'EOF'
       "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:TagRole",
       "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy",
       "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:ListRolePolicies",
-      "iam:ListAttachedRolePolicies", "iam:PassRole"
+      "iam:ListAttachedRolePolicies", "iam:ListInstanceProfilesForRole",
+      "iam:PassRole"
     ],
-    "Resource": "arn:aws:iam::550094086634:role/cluster-ecs-fargate-*"
+    "Resource": [
+      "arn:aws:iam::550094086634:role/cluster-ecs-fargate-*",
+      "arn:aws:iam::550094086634:role/app-service-*"
+    ]
   }]
 }
 EOF
@@ -190,8 +219,15 @@ aws iam put-role-policy \
   --policy-document file:///tmp/iam-limitada.json
 ```
 
-O `Resource` com prefixo é o que mantém o raio de alcance dentro do projeto: o
-pipeline não consegue tocar em roles de outros sistemas na mesma conta.
+Os prefixos mantêm o raio de alcance dentro do projeto: o pipeline não consegue
+tocar em roles de outros sistemas na mesma conta.
+
+São **dois** prefixos porque o Terraform cria roles com padrões de nome
+diferentes — `app-service-role` vem do root module, e
+`cluster-ecs-fargate-app-service-service-role` vem do `service-module`. Ao
+adicionar um recurso novo, confira o ARN que aparece em qualquer `AccessDenied`
+antes de ampliar: quase sempre é um nome fora dos prefixos, não uma permissão
+realmente faltando.
 
 ## 4. Cadastrar a variable no environment
 
@@ -276,6 +312,25 @@ O valor chegou e o token foi emitido, mas a AWS recusou. Note que
 isso é a **trust policy** recusando quem está pedindo — não tem relação com as
 permissões do passo 3, que só valem depois que o role é assumido. Anexar mais
 policies não resolve.
+
+**Descubra o `sub` real em vez de adivinhar.** O CloudTrail registra a tentativa
+recusada com a identidade exata que foi apresentada:
+
+```bash
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=AssumeRoleWithWebIdentity \
+  --max-results 5 --region us-east-1 \
+  --query 'Events[].CloudTrailEvent' --output text \
+  | python3 -c "import sys,json; [print(json.loads(l)['userIdentity']['userName']) for l in sys.stdin]"
+```
+
+A saída é o `sub` literal que o token carregava — compare com o que está na
+trust policy. Foi assim que se descobriu que este repositório usa immutable
+identifiers, algo que nenhuma quantidade de curingas na forma clássica
+resolveria.
+
+O `requestParameters` do evento vem `null`, porque a AWS omite o token da web
+identity do log. A identidade fica em `userIdentity.userName`.
 
 Verifique qual formato o seu job produz, conforme a tabela do passo 2. A
 armadilha mais comum: adicionar `environment:` a um job troca o `sub` de
