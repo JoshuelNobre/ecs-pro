@@ -5,7 +5,7 @@ assume para aplicar o Terraform e publicar a imagem no ECR.
 
 Com OIDC não existe chave de acesso armazenada no GitHub: a cada execução o
 Actions apresenta um token de curta duração e a AWS devolve credenciais
-temporárias. O único secret no repositório é o ARN do role, que não é sigiloso.
+temporárias. O único secret guardado é o ARN do role, que não é sigiloso.
 
 Este role é o que permite ao CI rodar Terraform, então ele **não pode ser criado
 pelo próprio pipeline**. Os comandos abaixo são executados uma vez, localmente,
@@ -18,8 +18,9 @@ por alguém com permissão de IAM na conta.
 | Conta AWS | `550094086634` |
 | Repositório | `JoshuelNobre/ecs-pro` |
 | Branch que faz deploy | `main` |
+| GitHub Environment | `DEV` |
 | Nome do role | `ecs-pro-github-actions` |
-| Secret no GitHub | `AWS_ROLE_ARN` |
+| Secret | `AWS_ROLE_ARN`, dentro do environment `DEV` |
 
 ## Pré-requisitos
 
@@ -69,7 +70,7 @@ cat > /tmp/trust.json <<'EOF'
     "Condition": {
       "StringEquals": {
         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-        "token.actions.githubusercontent.com:sub": "repo:JoshuelNobre/ecs-pro:ref:refs/heads/main"
+        "token.actions.githubusercontent.com:sub": "repo:JoshuelNobre/ecs-pro:environment:DEV"
       }
     }
   }]
@@ -80,6 +81,9 @@ aws iam create-role \
   --role-name ecs-pro-github-actions \
   --assume-role-policy-document file:///tmp/trust.json
 ```
+
+Para alterar a trust policy de um role que já existe, troque o último comando
+por `aws iam update-assume-role-policy` com os mesmos argumentos.
 
 ### A condição `sub` é a parte que importa
 
@@ -93,7 +97,49 @@ Dois cuidados:
   `repo:JoshuelNobre/*`, todos os seus repositórios ganham acesso.
 - Nunca omita a condição `sub` "para testar depois".
 
-O formato é `repo:OWNER/REPO:ref:refs/heads/BRANCH`.
+### O formato do `sub` depende do job
+
+Este é o detalhe que mais causa confusão: o `sub` **muda de formato** conforme
+o job declara ou não um environment.
+
+| O job | `sub` que o token carrega |
+|---|---|
+| não declara environment | `repo:OWNER/REPO:ref:refs/heads/BRANCH` |
+| declara `environment: NOME` | `repo:OWNER/REPO:environment:NOME` |
+
+Os jobs deste projeto declaram `environment: DEV`, porque é lá que vive o
+secret — daí a trust policy acima usar a segunda forma. Se você remover o
+`environment:` do workflow, o token passa a apresentar a primeira forma e a
+trust policy precisa acompanhar, senão o `AssumeRoleWithWebIdentity` é negado.
+
+Amarrar no environment é mais restritivo que amarrar na branch: em vez de
+qualquer job rodando na `main`, só jobs que declaram `DEV` conseguem assumir.
+
+### O que está aplicado hoje
+
+Para não depender de acertar o formato exato, a trust policy em uso aceita
+qualquer origem dentro deste repositório:
+
+```json
+"Condition": {
+  "StringEquals": {
+    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+  },
+  "StringLike": {
+    "token.actions.githubusercontent.com:sub": "repo:JoshuelNobre/ecs-pro:*"
+  }
+}
+```
+
+O limite que mais importa continua de pé: nenhum outro repositório do GitHub
+consegue assumir o role. O que se abre mão é do isolamento interno — qualquer
+branch, environment ou pull request deste repositório passa a ter o mesmo
+acesso que a `main`.
+
+Enquanto há um ambiente só e o repositório é seu, a diferença é pequena. Ela
+deixa de ser quando existir produção: aí vale voltar ao `StringEquals` da seção
+anterior, ou seguir o modelo de um role por ambiente descrito no fim deste
+documento.
 
 ## 3. Anexar permissões
 
@@ -146,15 +192,40 @@ aws iam put-role-policy \
 O `Resource` com prefixo é o que mantém o raio de alcance dentro do projeto: o
 pipeline não consegue tocar em roles de outros sistemas na mesma conta.
 
-## 4. Cadastrar o secret no GitHub
+## 4. Cadastrar o secret no environment
 
 ```bash
 gh secret set AWS_ROLE_ARN \
+  --env DEV \
   --body "$(aws iam get-role --role-name ecs-pro-github-actions --query 'Role.Arn' --output text)"
 ```
 
-Pela interface: **Settings → Secrets and variables → Actions → New repository
-secret**, com o nome `AWS_ROLE_ARN`.
+Pela interface: **Settings → Environments → DEV → Add environment secret**, com
+o nome `AWS_ROLE_ARN`.
+
+### Environment secret e repository secret não são a mesma coisa
+
+Um secret de environment só é visível para jobs que declarem aquele environment:
+
+```yaml
+jobs:
+  deploy:
+    environment: DEV      # sem isso, secrets.AWS_ROLE_ARN vem vazio
+```
+
+Um secret de repositório (**Settings → Secrets and variables → Actions**) é
+visível para todos os jobs e dispensa a declaração — mas aí o `sub` do token
+volta ao formato de branch, e a trust policy precisa acompanhar.
+
+**O nome precisa bater exatamente, incluindo maiúsculas.** Um workflow que
+referencia um environment inexistente não falha: o GitHub cria um novo, vazio.
+O job então roda sem o secret, e o erro resultante é idêntico ao de não ter
+cadastrado nada — por isso `environment: dev` contra um environment `DEV` é uma
+hora perdida garantida.
+
+Se o environment tiver **required reviewers**, cada job que o declara pausa
+esperando aprovação. Com três jobs, são três pausas; nesse caso vale declarar o
+environment só no `deploy` e deixar o secret também no nível do repositório.
 
 ## 5. Verificar
 
@@ -164,18 +235,40 @@ caminho inteiro do OIDC.
 
 ## Erros comuns
 
-**`Credentials could not be loaded` ou nenhum token OIDC disponível**
+**`Could not load credentials from any providers`**
 
-Falta `permissions: id-token: write` no workflow. Sem isso o GitHub não emite o
-token, e a mensagem não deixa claro o que faltou. Já está configurado no
-`dev.yml`, mas é o primeiro lugar a olhar se você criar outro workflow.
+Antes de investigar a AWS, olhe os inputs que a action recebeu, no início do log
+do passo. O GitHub **omite inputs vazios**, então:
+
+```
+with:
+  aws-region: us-east-1        ← falta role-to-assume: o secret veio vazio
+  audience: sts.amazonaws.com
+```
+
+Se `role-to-assume` não aparece, o problema é o secret, não a AWS. Duas causas:
+o secret não existe, ou é um environment secret e o job não declara o
+`environment:` (veja o passo 4).
+
+Se `role-to-assume: ***` aparece, o secret chegou e o problema está adiante.
 
 **`Not authorized to perform sts:AssumeRoleWithWebIdentity`**
 
-A condição `sub` não bate com o que o Actions enviou. Confira o owner, o nome do
-repositório e a branch — o valor precisa ser idêntico, incluindo maiúsculas.
-Executar a partir de um pull request ou de uma tag gera um `sub` com formato
-diferente de `ref:refs/heads/...`.
+O secret chegou e o token foi emitido, mas a condição `sub` não bate. Note que
+isso é a **trust policy** recusando quem está pedindo — não tem relação com as
+permissões do passo 3, que só valem depois que o role é assumido. Anexar mais
+policies não resolve.
+
+Verifique qual formato o seu job produz, conforme a tabela do passo 2. A
+armadilha mais comum: adicionar `environment:` a um job troca o `sub` de
+`ref:refs/heads/main` para `environment:DEV`, e uma trust policy escrita para a
+branch para de funcionar.
+
+Rodar a partir de um pull request ou de uma tag também gera formatos distintos.
+
+A action tenta várias vezes antes de desistir, então repetições de
+`Assuming role with OIDC` no log são só o retry — não indicam falha
+intermitente.
 
 **`AccessDenied` em alguma ação de IAM**
 
@@ -185,13 +278,29 @@ criado, não uma permissão genuinamente faltando.
 
 ## Quando houver mais de um ambiente
 
-Hoje tudo sai da `main` e aplica em `dev`, com o ambiente fixado na variável
-`ENVIRONMENT` do workflow. Ao separar os ambientes por branch, dois ajustes:
+Hoje tudo sai da `main` e aplica em `dev`, com o diretório de tfvars fixado na
+variável `ENVIRONMENT` do workflow e o GitHub Environment fixado como `DEV`.
 
-- No workflow, trocar `ENVIRONMENT` por `${{ github.ref_name }}`
-- Na trust policy, aceitar as branches correspondentes — aí sim com
-  `StringLike` e `repo:JoshuelNobre/ecs-pro:ref:refs/heads/*`, ou uma lista
-  explícita de valores no `StringEquals`
+Ao separar os ambientes, o caminho mais seguro é **um role por ambiente**, cada
+um com a trust policy amarrada ao seu próprio environment:
 
-O mais seguro é um role por ambiente, cada um amarrado à sua branch, para que um
-deploy de `dev` não tenha permissão sobre produção.
+| Ambiente | Role | `sub` esperado |
+|---|---|---|
+| dev | `ecs-pro-github-actions-dev` | `repo:JoshuelNobre/ecs-pro:environment:dev` |
+| prod | `ecs-pro-github-actions-prod` | `repo:JoshuelNobre/ecs-pro:environment:prod` |
+
+Cada environment guarda seu próprio `AWS_ROLE_ARN`, então o workflow não muda —
+o mesmo `${{ secrets.AWS_ROLE_ARN }}` resolve para um role diferente conforme o
+environment do job. Um deploy de dev não consegue tocar em produção, porque o
+token que ele apresenta nem serve para assumir o role de lá.
+
+Dois ajustes no workflow:
+
+- Trocar a variável `ENVIRONMENT` por `${{ github.ref_name }}`, para o
+  `-var-file` seguir a branch
+- Trocar `environment: DEV` por `${{ github.ref_name }}`, lembrando que o nome
+  do environment terá de bater com o da branch, maiúsculas incluídas — o que é
+  um bom motivo para renomear `DEV` para `dev` antes de chegar lá
+
+Evite resolver isso com um `StringLike` e `refs/heads/*` num role único: seria
+mais simples de escrever e daria a qualquer branch o mesmo acesso que produção.
