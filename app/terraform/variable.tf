@@ -182,3 +182,7 @@ variable "ssm_alb_arn" {
   description = "The ARN of the Application Load Balancer (ALB) to use for scaling based on request count."
   type        = string
 }
+variable "container_image" {
+  description = "Fully qualified image the task runs, including the tag. Built and pushed by the pipeline, which owns the ECR repository."
+  type        = string
+}

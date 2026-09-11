@@ -5,6 +5,7 @@ module "service" {
 
   cluster_name                = var.cluster_name
   service_name                = var.service_name
+  container_image             = var.container_image
   service_port                = var.service_port
   service_cpu                 = var.service_cpu
   service_memory              = var.service_memory

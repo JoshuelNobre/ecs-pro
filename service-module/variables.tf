@@ -208,3 +208,7 @@ variable "scale_tracking_request" {
   type        = string
   default     = 0
 }
+variable "container_image" {
+  description = "Fully qualified image the task runs, including the tag. Built and pushed by the pipeline, which owns the ECR repository."
+  type        = string
+}
