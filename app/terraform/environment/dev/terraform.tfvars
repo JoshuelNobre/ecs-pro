@@ -19,6 +19,7 @@ service_launch_type = [
 service_task_count    = 3
 ssm_listener          = "/cluster-ecs-fargate/lb-listener-arn"
 ssm_vpc_id            = "/ecs-pro-network/vpc-id"
+ssm_vpc_cidr          = "/ecs-pro-network/vpc-cidr"
 ssm_private_subnet_1a = "/ecs-pro-network/private-subnet-1a-id"
 ssm_private_subnet_1b = "/ecs-pro-network/private-subnet-1b-id"
 ssm_private_subnet_1c = "/ecs-pro-network/private-subnet-1c-id"

@@ -1,6 +1,15 @@
 module "service" {
   source = "../../service-module"
 
+  # o módulo só depende do file system, e mount target é irmão dele no grafo:
+  # sem isso o Terraform cria os dois em paralelo e o ECS sobe task contra um
+  # DNS que ainda não resolve (o registro só existe com o mount target pronto)
+  depends_on = [
+    aws_efs_mount_target.mount_1a,
+    aws_efs_mount_target.mount_1b,
+    aws_efs_mount_target.mount_1c,
+  ]
+
   region = var.region
 
   cluster_name                = var.cluster_name
@@ -21,6 +30,16 @@ module "service" {
     data.aws_ssm_parameter.private_subnet_1b.value,
     data.aws_ssm_parameter.private_subnet_1c.value
   ]
+
+  efs_volumes = [{
+    volume_name    = "volume-de-exemplo"
+    file_system_id = aws_efs_file_system.main.id
+    root_directory = "/"
+    container_path = "/mnt/efs"
+    read_only      = false
+  }]
+
+
   environment_variables = var.environment_variables
   capabilities          = var.capabilities
 

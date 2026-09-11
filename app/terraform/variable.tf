@@ -3,6 +3,10 @@ variable "region" {
   type        = string
 }
 
+variable "ssm_vpc_cidr" {
+  description = "The SSM parameter name for the VPC CIDR block"
+}
+
 variable "cluster_name" {
   description = "The name of the ECS cluster."
   type        = string
