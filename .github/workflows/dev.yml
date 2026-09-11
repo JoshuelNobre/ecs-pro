@@ -56,7 +56,7 @@ jobs:
   ci-terraform:
     runs-on: ubuntu-latest
     # o secret AWS_ROLE_ARN vive no environment, não no repositório
-    environment: dev
+    environment: DEV
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
@@ -87,7 +87,7 @@ jobs:
   build-publish:
     runs-on: ubuntu-latest
     # o secret AWS_ROLE_ARN vive no environment, não no repositório
-    environment: dev
+    environment: DEV
     needs:
       - ci-app
       - ci-terraform
@@ -128,7 +128,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     # o secret AWS_ROLE_ARN vive no environment, não no repositório
-    environment: dev
+    environment: DEV
     needs:
       - build-publish
     steps:
