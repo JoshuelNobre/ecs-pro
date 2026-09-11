@@ -5,7 +5,8 @@ assume para aplicar o Terraform e publicar a imagem no ECR.
 
 Com OIDC não existe chave de acesso armazenada no GitHub: a cada execução o
 Actions apresenta um token de curta duração e a AWS devolve credenciais
-temporárias. O único secret guardado é o ARN do role, que não é sigiloso.
+temporárias. O único valor guardado é o ARN do role, que não é sigiloso — por isso fica
+como variable, e não como secret.
 
 Este role é o que permite ao CI rodar Terraform, então ele **não pode ser criado
 pelo próprio pipeline**. Os comandos abaixo são executados uma vez, localmente,
@@ -18,9 +19,9 @@ por alguém com permissão de IAM na conta.
 | Conta AWS | `550094086634` |
 | Repositório | `JoshuelNobre/ecs-pro` |
 | Branch que faz deploy | `main` |
-| GitHub Environment | `DEV` |
+| GitHub Environment | `dev` |
 | Nome do role | `ecs-pro-github-actions` |
-| Secret | `AWS_ROLE_ARN`, dentro do environment `DEV` |
+| Variable | `AWS_ROLE_ARN`, dentro do environment `dev` |
 
 ## Pré-requisitos
 
@@ -70,7 +71,7 @@ cat > /tmp/trust.json <<'EOF'
     "Condition": {
       "StringEquals": {
         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-        "token.actions.githubusercontent.com:sub": "repo:JoshuelNobre/ecs-pro:environment:DEV"
+        "token.actions.githubusercontent.com:sub": "repo:JoshuelNobre/ecs-pro:environment:dev"
       }
     }
   }]
@@ -107,13 +108,13 @@ o job declara ou não um environment.
 | não declara environment | `repo:OWNER/REPO:ref:refs/heads/BRANCH` |
 | declara `environment: NOME` | `repo:OWNER/REPO:environment:NOME` |
 
-Os jobs deste projeto declaram `environment: DEV`, porque é lá que vive o
-secret — daí a trust policy acima usar a segunda forma. Se você remover o
+Os jobs deste projeto declaram `environment: dev`, porque é lá que vive a
+variable — daí a trust policy acima usar a segunda forma. Se você remover o
 `environment:` do workflow, o token passa a apresentar a primeira forma e a
 trust policy precisa acompanhar, senão o `AssumeRoleWithWebIdentity` é negado.
 
 Amarrar no environment é mais restritivo que amarrar na branch: em vez de
-qualquer job rodando na `main`, só jobs que declaram `DEV` conseguem assumir.
+qualquer job rodando na `main`, só jobs que declaram `dev` conseguem assumir.
 
 ### O que está aplicado hoje
 
@@ -192,40 +193,54 @@ aws iam put-role-policy \
 O `Resource` com prefixo é o que mantém o raio de alcance dentro do projeto: o
 pipeline não consegue tocar em roles de outros sistemas na mesma conta.
 
-## 4. Cadastrar o secret no environment
+## 4. Cadastrar a variable no environment
 
 ```bash
-gh secret set AWS_ROLE_ARN \
-  --env DEV \
+gh variable set AWS_ROLE_ARN \
+  --env dev \
   --body "$(aws iam get-role --role-name ecs-pro-github-actions --query 'Role.Arn' --output text)"
 ```
 
-Pela interface: **Settings → Environments → DEV → Add environment secret**, com
-o nome `AWS_ROLE_ARN`.
+Pela interface: **Settings → Environments → dev → Add environment variable**,
+com o nome `AWS_ROLE_ARN`.
 
-### Environment secret e repository secret não são a mesma coisa
+> **O valor é só o ARN.** Nome e valor são campos separados no GitHub, então
+> não repita o nome dentro do valor:
+>
+> ```
+> ✗  AWS_ROLE_ARN=arn:aws:iam::550094086634:role/ecs-pro-github-actions
+> ✓  arn:aws:iam::550094086634:role/ecs-pro-github-actions
+> ```
+>
+> O hábito de arquivo `.env`, onde `CHAVE=valor` vai numa linha só, leva
+> direto a esse erro. O resultado é um ARN inválido, e a AWS responde
+> `Not authorized to perform sts:AssumeRoleWithWebIdentity` — uma mensagem
+> que faz procurar o problema em permissões e trust policy.
 
-Um secret de environment só é visível para jobs que declarem aquele environment:
+### Environment e repositório não são o mesmo escopo
+
+Uma variable (ou secret) de environment só é visível para jobs que declarem
+aquele environment:
 
 ```yaml
 jobs:
   deploy:
-    environment: DEV      # sem isso, secrets.AWS_ROLE_ARN vem vazio
+    environment: dev      # sem isso, vars.AWS_ROLE_ARN vem vazio
 ```
 
-Um secret de repositório (**Settings → Secrets and variables → Actions**) é
+Uma variable de repositório (**Settings → Secrets and variables → Actions**) é
 visível para todos os jobs e dispensa a declaração — mas aí o `sub` do token
 volta ao formato de branch, e a trust policy precisa acompanhar.
 
 **O nome precisa bater exatamente, incluindo maiúsculas.** Um workflow que
 referencia um environment inexistente não falha: o GitHub cria um novo, vazio.
-O job então roda sem o secret, e o erro resultante é idêntico ao de não ter
-cadastrado nada — por isso `environment: dev` contra um environment `DEV` é uma
+O job então roda sem a variable, e o erro resultante é idêntico ao de não ter
+cadastrado nada — por isso `environment: DEV` contra um environment `dev` é uma
 hora perdida garantida.
 
 Se o environment tiver **required reviewers**, cada job que o declara pausa
 esperando aprovação. Com três jobs, são três pausas; nesse caso vale declarar o
-environment só no `deploy` e deixar o secret também no nível do repositório.
+environment só no `deploy` e deixar a variable também no nível do repositório.
 
 ## 5. Verificar
 
@@ -242,19 +257,22 @@ do passo. O GitHub **omite inputs vazios**, então:
 
 ```
 with:
-  aws-region: us-east-1        ← falta role-to-assume: o secret veio vazio
+  aws-region: us-east-1        ← falta role-to-assume: a variable veio vazia
   audience: sts.amazonaws.com
 ```
 
-Se `role-to-assume` não aparece, o problema é o secret, não a AWS. Duas causas:
-o secret não existe, ou é um environment secret e o job não declara o
-`environment:` (veja o passo 4).
+Se `role-to-assume` não aparece, o problema é a variable, não a AWS. Duas
+causas: ela não existe, ou vive num environment que o job não declara (veja o
+passo 4).
 
-Se `role-to-assume: ***` aparece, o secret chegou e o problema está adiante.
+Se `role-to-assume` aparece preenchido, o valor chegou e o problema está
+adiante. Confira se ele é **só o ARN**: colar `AWS_ROLE_ARN=arn:aws:...`, no
+formato de arquivo `.env`, produz um ARN inválido e a AWS responde com o erro
+de autorização abaixo, que aponta para o lugar errado.
 
 **`Not authorized to perform sts:AssumeRoleWithWebIdentity`**
 
-O secret chegou e o token foi emitido, mas a condição `sub` não bate. Note que
+O valor chegou e o token foi emitido, mas a AWS recusou. Note que
 isso é a **trust policy** recusando quem está pedindo — não tem relação com as
 permissões do passo 3, que só valem depois que o role é assumido. Anexar mais
 policies não resolve.
