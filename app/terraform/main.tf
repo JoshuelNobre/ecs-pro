@@ -41,7 +41,19 @@ module "service" {
 
 
   environment_variables = var.environment_variables
-  capabilities          = var.capabilities
+
+  secrets = [
+    {
+      name      = "VARIAVEL_DE_EXEMPLO"
+      valueFrom = aws_ssm_parameter.teste.arn
+    },
+    {
+      name      = "VARIAVEL_DE_EXEMPLO_SECRETS_MANAGER"
+      valueFrom = aws_secretsmanager_secret.teste.arn
+    }
+  ]
+
+  capabilities = var.capabilities
 
   task_minimum = var.task_minimum
   task_maximum = var.task_maximum

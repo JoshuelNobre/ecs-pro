@@ -34,6 +34,9 @@ resource "aws_iam_role_policy" "ecs_task_execution_policy" {
           "ecr:BatchGetImage",
           "s3:GetObject",
           "sqs:*",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath",
+          "secretsmanager:GetSecretValue"
         ],
         Resource = "*",
         Effect   = "Allow"
