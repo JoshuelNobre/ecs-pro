@@ -224,3 +224,12 @@ variable "efs_volumes" {
   }))
   default = []
 }
+
+variable "secrets" {
+  type = list(object({
+    name      = string
+    valueFrom = string
+  }))
+  description = "A list of environment variables to set in the container."
+  default     = []
+}
