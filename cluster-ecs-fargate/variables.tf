@@ -26,6 +26,18 @@ variable "ssm_public_subnet_1c_id" {
   description = "The SSM parameter name for the public subnet 1c ID"
 }
 
+variable "ssm_private_subnet_1a_id" {
+  description = "The SSM parameter name for the private subnet 1a ID"
+}
+
+variable "ssm_private_subnet_1b_id" {
+  description = "The SSM parameter name for the private subnet 1b ID"
+}
+
+variable "ssm_private_subnet_1c_id" {
+  description = "The SSM parameter name for the private subnet 1c ID"
+}
+
 # Balancer
 
 variable "load_balancer_internal" {}

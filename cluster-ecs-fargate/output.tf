@@ -9,3 +9,11 @@ output "lb_ssm_arn" {
 output "lb_listener_ssm_arn" {
   value = aws_ssm_parameter.lb_listener_arn.id
 }
+
+output "lb_internal_ssm_arn" {
+  value = aws_ssm_parameter.lb_internal_arn.id
+}
+
+output "lb_internal_listener_ssm_arn" {
+  value = aws_ssm_parameter.lb_internal_listener_arn.id
+}
