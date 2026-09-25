@@ -1,5 +1,5 @@
 region         = "us-east-1"
-cluster_name   = "cluster-ecs-fargate"
+cluster_name   = "jonoma-it"
 service_name   = "app-service"
 service_port   = 8080
 service_cpu    = 256
@@ -18,22 +18,22 @@ service_launch_type = [
 
 service_task_count = 3
 
-# ssm_listener          = "/cluster-ecs-fargate/lb-listener-arn"
-# ssm_alb_arn           = "/cluster-ecs-fargate/lb-arn"
+# ssm_listener          = "/jonoma-it/lb-listener-arn"
+# ssm_alb_arn           = "/jonoma-it/lb-arn"
 
-ssm_listener = "/cluster-ecs-fargate/lb-internal-listener-arn"
-ssm_alb_arn  = "/cluster-ecs-fargate/lb-internal-arn"
+ssm_listener = "/jonoma-it/lb-internal-listener-arn"
+ssm_alb_arn  = "/jonoma-it/lb-internal-arn"
 
-ssm_vpc_id            = "/ecs-pro-network/vpc-id"
-ssm_vpc_cidr          = "/ecs-pro-network/vpc-cidr"
-ssm_private_subnet_1a = "/ecs-pro-network/private-subnet-1a-id"
-ssm_private_subnet_1b = "/ecs-pro-network/private-subnet-1b-id"
-ssm_private_subnet_1c = "/ecs-pro-network/private-subnet-1c-id"
+ssm_vpc_id            = "/jonoma-it/vpc-id"
+ssm_vpc_cidr          = "/jonoma-it/vpc-cidr"
+ssm_private_subnet_1a = "/jonoma-it/private-subnet-1a-id"
+ssm_private_subnet_1b = "/jonoma-it/private-subnet-1b-id"
+ssm_private_subnet_1c = "/jonoma-it/private-subnet-1c-id"
 service_hosts = [
   # "app-service.joshuel.com"
-  "app.cluster-ecs-fargate.internal.com"
+  "app.jonoma-it.internal.com"
 ]
-
+ssm_service_discovery_namespace = "/jonoma-it/cloudmap/namespace"
 environment_variables = [
   {
     name  = "ENVIRONMENT"

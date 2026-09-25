@@ -22,7 +22,7 @@ env:
 
   AWS_ACCOUNT: "550094086634"
   AWS_REGION: "us-east-1"
-  CLUSTER_NAME: "cluster-ecs-fargate"
+  CLUSTER_NAME: "jonoma-it"
   SERVICE_NAME: "app-service"
   REPOSITORY_NAME: "linuxtips/ecs-pro-app"
   TERRAFORM_VERSION: "1.14.1"
