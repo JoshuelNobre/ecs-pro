@@ -39,7 +39,8 @@ resource "aws_iam_role_policy" "service_execution_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents",
           "ssm:GetParameters",
-          "ssm:GetParametersByPath"
+          "ssm:GetParametersByPath",
+          "secretsmanager:GetSecretValue"
         ],
         Resource = "*",
         Effect   = "Allow"
