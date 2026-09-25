@@ -25,3 +25,7 @@ data "aws_ssm_parameter" "alb_arn" {
 data "aws_ssm_parameter" "vpc_cidr" {
   name = var.ssm_vpc_cidr
 }
+
+data "aws_ssm_parameter" "service_discovery_namespace" {
+  name = var.ssm_service_discovery_namespace
+}

@@ -77,4 +77,6 @@ module "service" {
   scale_tracking_cpu           = var.scale_tracking_cpu
   alb_arn                      = data.aws_ssm_parameter.alb_arn.value
   scale_tracking_request       = var.scale_tracking_request
+
+  service_discovery_namespace = data.aws_ssm_parameter.service_discovery_namespace.value
 }

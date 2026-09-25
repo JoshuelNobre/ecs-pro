@@ -190,3 +190,9 @@ variable "container_image" {
   description = "Fully qualified image the task runs, including the tag. Built and pushed by the pipeline, which owns the ECR repository."
   type        = string
 }
+
+variable "ssm_service_discovery_namespace" {
+  description = "The namespace for the service discovery."
+  type        = string
+  default     = null
+}

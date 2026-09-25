@@ -233,3 +233,9 @@ variable "secrets" {
   description = "A list of environment variables to set in the container."
   default     = []
 }
+
+variable "service_discovery_namespace" {
+  description = "The namespace for the service discovery."
+  type        = string
+  default     = null
+}

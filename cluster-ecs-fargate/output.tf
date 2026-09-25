@@ -17,3 +17,7 @@ output "lb_internal_ssm_arn" {
 output "lb_internal_listener_ssm_arn" {
   value = aws_ssm_parameter.lb_internal_listener_arn.id
 }
+
+output "cloudmap_ssm_arn" {
+  value = aws_ssm_parameter.cloudmap.id
+}
