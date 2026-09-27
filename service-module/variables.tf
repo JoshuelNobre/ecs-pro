@@ -51,7 +51,11 @@ variable "service_health_check" {
   })
 }
 
-variable "service_listener" {}
+variable "service_listener" {
+  description = "ARN of the load balancer listener the rule is attached to. Unused when use_lb is false."
+  type        = string
+  default     = null
+}
 
 variable "service_task_execution_role" {
 }
@@ -88,7 +92,11 @@ variable "service_task_count" {
   type        = number
 }
 
-variable "service_hosts" {}
+variable "service_hosts" {
+  description = "Host headers the listener rule matches. Unused when use_lb is false."
+  type        = list(string)
+  default     = []
+}
 
 variable "scale_type" {
   default = null
@@ -232,6 +240,12 @@ variable "secrets" {
   }))
   description = "A list of environment variables to set in the container."
   default     = []
+}
+
+variable "use_lb" {
+  description = "Whether the service sits behind a load balancer. Internal services reached only through service discovery should set this to false: no target group and no listener rule are created."
+  type        = bool
+  default     = true
 }
 
 variable "service_discovery_namespace" {

@@ -1,6 +1,16 @@
 resource "aws_lb_target_group" "main" {
 
-  name = substr(format("%s%s", var.cluster_name, var.service_name), 0, 32)
+  count = var.use_lb ? 1 : 0
+
+  # 32 caracteres é o teto da AWS, e o nome precisa ser único na conta. O nome
+  # do serviço vai na frente para dar para reconhecer no console; os 8 dígitos
+  # de hash cobrem serviços homônimos em clusters diferentes e o caso de dois
+  # nomes longos truncarem no mesmo ponto. 23 + 1 + 8 = 32
+  name = format(
+    "%s-%s",
+    trimsuffix(substr(var.service_name, 0, 23), "-"),
+    substr(sha256(format("%s%s", var.service_name, var.cluster_name)), 0, 8)
+  )
 
   port        = var.service_port
   protocol    = "HTTP"

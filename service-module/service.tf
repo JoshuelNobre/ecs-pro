@@ -19,10 +19,16 @@ resource "aws_ecs_service" "main" {
     }
   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.main.arn
-    container_name   = var.service_name
-    container_port   = var.service_port
+  # serviço interno (gRPC entre tasks, por exemplo) não precisa de balanceador:
+  # quem descobre o endereço é o Cloud Map, e o tráfego vai direto ao IP da task
+  dynamic "load_balancer" {
+    for_each = aws_lb_target_group.main
+
+    content {
+      target_group_arn = load_balancer.value.arn
+      container_name   = var.service_name
+      container_port   = var.service_port
+    }
   }
 
   deployment_minimum_healthy_percent = 100
