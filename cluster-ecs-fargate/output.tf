@@ -21,3 +21,11 @@ output "lb_internal_listener_ssm_arn" {
 output "cloudmap_ssm_arn" {
   value = aws_ssm_parameter.cloudmap.id
 }
+
+output "service_connect_ssm_arn" {
+  value = aws_ssm_parameter.service_connect.id
+}
+
+output "service_connect_dns" {
+  value = aws_ssm_parameter.service_connect_dns.id
+}

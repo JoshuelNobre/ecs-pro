@@ -28,6 +28,36 @@ variable "service_port" {
   type        = number
 }
 
+variable "service_protocol" {
+  description = "The protocol used by the service (e.g., HTTP, HTTPS, TCP)."
+  type        = string
+  default     = null
+}
+
+variable "protocol" {
+  description = "The protocol used by the service (e.g. UDP, TCP)."
+  type        = string
+  default     = "tcp"
+}
+
+variable "service_connect_name" {
+  description = "The name of the service connect."
+  type        = string
+  default     = null
+}
+
+variable "service_connect_arn" {
+  description = "The ARN of the service connect."
+  type        = string
+  default     = null
+}
+
+variable "use_service_connect" {
+  description = "Whether to use service connect for the service."
+  type        = bool
+  default     = false
+}
+
 variable "service_cpu" {
   description = "The amount of CPU units to allocate for the service."
   type        = number

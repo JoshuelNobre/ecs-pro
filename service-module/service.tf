@@ -19,6 +19,24 @@ resource "aws_ecs_service" "main" {
     }
   }
 
+  dynamic "service_connect_configuration" {
+    for_each = var.use_service_connect ? [var.service_connect_name] : []
+
+    content {
+      enabled   = var.use_service_connect
+      namespace = var.service_connect_name
+
+      service {
+        port_name      = var.service_name
+        discovery_name = var.service_name
+        client_alias {
+          port     = var.service_port
+          dns_name = format("%s.%s", var.service_name, var.service_connect_name)
+        }
+      }
+    }
+  }
+
   # serviço interno (gRPC entre tasks, por exemplo) não precisa de balanceador:
   # quem descobre o endereço é o Cloud Map, e o tráfego vai direto ao IP da task
   dynamic "load_balancer" {

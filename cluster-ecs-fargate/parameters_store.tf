@@ -27,3 +27,15 @@ resource "aws_ssm_parameter" "cloudmap" {
   type  = "String"
   value = aws_service_discovery_private_dns_namespace.service_discovery_namespace.id
 }
+
+resource "aws_ssm_parameter" "service_connect" {
+  name  = format("/%s/service-connect/namespace", var.project_name)
+  type  = "String"
+  value = aws_service_discovery_private_dns_namespace.service_connect.id
+}
+
+resource "aws_ssm_parameter" "service_connect_dns" {
+  name  = format("/%s/service-connect/dns", var.project_name)
+  type  = "String"
+  value = aws_service_discovery_private_dns_namespace.service_connect.name
+}
