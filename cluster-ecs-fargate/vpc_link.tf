@@ -82,6 +82,12 @@ resource "aws_lb_target_group_attachment" "internal_lb" {
   target_group_arn = aws_lb_target_group.vpc_link.arn
   target_id        = aws_lb.internal.arn
   port             = 80
+
+  # o alvo é o ALB, não o listener, então o Terraform não liga os dois sozinho.
+  # A AWS exige que o ALB tenha listener na porta registrada, e recusa remover
+  # esse listener enquanto o ALB for alvo de alguém — sem esta aresta o destroy
+  # tenta apagar o listener primeiro e falha com ResourceInUse
+  depends_on = [aws_lb_listener.http_internal]
 }
 
 resource "aws_api_gateway_vpc_link" "vpc_link" {
