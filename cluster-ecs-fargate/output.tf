@@ -29,3 +29,7 @@ output "service_connect_ssm_arn" {
 output "service_connect_dns" {
   value = aws_ssm_parameter.service_connect_dns.id
 }
+
+output "vpc_link_ssm_arn" {
+  value = aws_ssm_parameter.vpc_link.id
+}
