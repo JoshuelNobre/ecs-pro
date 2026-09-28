@@ -22,8 +22,8 @@ module "health_api" {
   # única porta de entrada do lab: recebe de fora e orquestra as chamadas gRPC
   # para os demais serviços. Para fechar o lab na VPC, trocar os dois pelos
   # data sources listener_internal/alb_internal
-  service_listener = data.aws_ssm_parameter.listener.value
-  alb_arn          = data.aws_ssm_parameter.alb.value
+  service_listener = data.aws_ssm_parameter.listener_internal.value
+  alb_arn          = data.aws_ssm_parameter.alb_internal.value
 
   service_task_execution_role = aws_iam_role.main.arn
   capabilities                = ["FARGATE"]
@@ -31,7 +31,8 @@ module "health_api" {
   service_discovery_namespace = data.aws_ssm_parameter.service_discovery_namespace.value
 
   service_hosts = [
-    format("health.%s", var.ingress_domain),
+    # format("health.%s", var.ingress_domain),
+    "health.jonoma-it.internal.com"
   ]
 
   service_health_check = {
