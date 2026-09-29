@@ -194,6 +194,11 @@
               }
             }
           },
+          "security": [
+            {
+              "api_key": []
+            }
+          ],
           "x-amazon-apigateway-integration": {
             "responses": {
               "default": {
@@ -207,6 +212,15 @@
             "connectionType": "VPC_LINK",
             "connectionId": "${stageVariables.vpcLinkId}"
           }
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "api_key": {
+          "type": "apiKey",
+          "name": "x-api-key",
+          "in": "header"
         }
       }
     }
