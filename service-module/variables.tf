@@ -311,7 +311,7 @@ variable "codedeployment_type" {
 variable "codedeploy_wait_time" {
   description = "The wait time (in minutes) for the CodeDeploy deployment."
   type        = number
-  default     = 5
+  default     = 2
 }
 
 variable "codedeploy_terminate_action" {
@@ -324,4 +324,28 @@ variable "codedeploy_timeout_action" {
   description = "What CodeDeploy does when the wait before shifting traffic runs out: CONTINUE_DEPLOYMENT or STOP_DEPLOYMENT."
   type        = string
   default     = "CONTINUE_DEPLOYMENT"
+}
+
+variable "codedeploy_rollback_alarm" {
+  description = "Whether a CloudWatch alarm on the error rate across both target groups can roll a deployment back."
+  type        = bool
+  default     = true
+}
+
+variable "codedeploy_rollback_error_threshold" {
+  type        = number
+  description = "Percentage of failing requests that trips the alarm."
+  default     = 10
+}
+
+variable "codedeploy_rollback_error_period" {
+  type        = number
+  description = "Seconds each datapoint of the error rate covers."
+  default     = 60
+}
+
+variable "codedeploy_rollback_error_evaluation_periods" {
+  type        = number
+  description = "How many consecutive periods must breach before the alarm fires."
+  default     = 1
 }
