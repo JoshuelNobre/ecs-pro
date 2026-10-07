@@ -69,6 +69,9 @@ module "recommendations" {
       name  = "CALORIES_SERVICE_ENDPOINT"
       value = format("nutrition-calories.%s:30000", var.discovery_domain)
     },
+    { name  = "version",
+      value = timestamp()
+    }
   ]
 
   vpc_id = data.aws_ssm_parameter.vpc.value

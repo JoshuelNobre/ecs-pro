@@ -14,10 +14,11 @@ module "health_api" {
 
   container_image = "fidelissauro/health-api:latest"
 
-  use_service_connect  = true
-  service_connect_name = data.aws_ssm_parameter.service_connect_name.value
-  service_connect_arn  = data.aws_ssm_parameter.service_connect_arn.value
-  service_protocol     = "http"
+  # a AWS não permite Service Connect com o controller CODE_DEPLOY. Não faz
+  # falta aqui: as chamadas aos outros serviços saem pelos endereços do Cloud
+  # Map, e ninguém chama a health-api por dentro da malha
+  use_service_connect = false
+  service_protocol    = "http"
 
   # única porta de entrada do lab: recebe de fora e orquestra as chamadas gRPC
   # para os demais serviços. Para fechar o lab na VPC, trocar os dois pelos
@@ -34,6 +35,10 @@ module "health_api" {
     # format("health.%s", var.ingress_domain),
     "health.jonoma-it.internal.com"
   ]
+
+  deployment_controller = "CODE_DEPLOY"
+
+  codedeploy_strategy = "CodeDeployDefault.ECSLinear10PercentEvery1Minutes"
 
   service_health_check = {
     healthy_threshold   = 3
@@ -74,6 +79,9 @@ module "health_api" {
       name  = "RECOMMENDATIONS_SERVICE_ENDPOINT"
       value = format("nutrition-recommendations.%s:30000", var.discovery_domain)
     },
+    { name  = "version",
+      value = timestamp()
+    }
   ]
 
   vpc_id = data.aws_ssm_parameter.vpc.value
