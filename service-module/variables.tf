@@ -283,3 +283,45 @@ variable "service_discovery_namespace" {
   type        = string
   default     = null
 }
+
+variable "deployment_controller" {
+  description = "The deployment controller for the service."
+  type        = string
+  default     = "ECS"
+}
+
+variable "codedeploy_strategy" {
+  description = "The CodeDeploy strategy for the service."
+  type        = string
+  default     = "CodeDeployDefault.ECSAllAtOnce"
+}
+
+variable "codedeployment_option" {
+  description = "The CodeDeploy deployment option for the service."
+  type        = string
+  default     = "WITH_TRAFFIC_CONTROL"
+}
+
+variable "codedeployment_type" {
+  description = "The CodeDeploy deployment type for the service."
+  type        = string
+  default     = "BLUE_GREEN"
+}
+
+variable "codedeploy_wait_time" {
+  description = "The wait time (in minutes) for the CodeDeploy deployment."
+  type        = number
+  default     = 5
+}
+
+variable "codedeploy_terminate_action" {
+  description = "The action to take when terminating the blue instances in a CodeDeploy deployment."
+  type        = string
+  default     = "TERMINATE"
+}
+
+variable "codedeploy_timeout_action" {
+  description = "What CodeDeploy does when the wait before shifting traffic runs out: CONTINUE_DEPLOYMENT or STOP_DEPLOYMENT."
+  type        = string
+  default     = "CONTINUE_DEPLOYMENT"
+}

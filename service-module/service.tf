@@ -37,10 +37,11 @@ resource "aws_ecs_service" "main" {
     }
   }
 
-  # serviço interno (gRPC entre tasks, por exemplo) não precisa de balanceador:
-  # quem descobre o endereço é o Cloud Map, e o tráfego vai direto ao IP da task
+  # itera a lista que estiver populada: main com o controller ECS, blue com o
+  # CODE_DEPLOY. As duas ficam vazias quando use_lb é false, e aí o bloco não é
+  # renderizado — serviço interno descoberto pelo Cloud Map não usa balanceador
   dynamic "load_balancer" {
-    for_each = aws_lb_target_group.main
+    for_each = var.deployment_controller == "CODE_DEPLOY" ? aws_lb_target_group.blue : aws_lb_target_group.main
 
     content {
       target_group_arn = load_balancer.value.arn
@@ -51,7 +52,10 @@ resource "aws_ecs_service" "main" {
 
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
-  force_new_deployment               = true
+
+  # com CODE_DEPLOY quem dispara o rollout é o CodeDeploy, e a AWS recusa um
+  # force vindo do ECS
+  force_new_deployment = var.deployment_controller == "ECS"
 
   depends_on = [aws_alb_listener_rule.main]
 
@@ -64,9 +68,13 @@ resource "aws_ecs_service" "main" {
     }
   }
 
+  deployment_controller {
+    type = var.deployment_controller
+  }
+
   deployment_circuit_breaker {
-    enable   = true
-    rollback = true
+    enable   = var.deployment_controller == "ECS" ? true : false
+    rollback = var.deployment_controller == "ECS" ? true : false
   }
 
   dynamic "ordered_placement_strategy" {
@@ -87,7 +95,9 @@ resource "aws_ecs_service" "main" {
 
   lifecycle {
     ignore_changes = [
-      desired_count
+      desired_count,
+      task_definition,
+      load_balancer
     ]
   }
 }

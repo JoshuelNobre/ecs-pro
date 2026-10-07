@@ -1,6 +1,6 @@
 resource "aws_lb_target_group" "main" {
 
-  count = var.use_lb ? 1 : 0
+  count = (var.use_lb && var.deployment_controller == "ECS") ? 1 : 0
 
   # 32 caracteres é o teto da AWS, e o nome precisa ser único na conta. O nome
   # do serviço vai na frente para dar para reconhecer no console; os 8 dígitos
