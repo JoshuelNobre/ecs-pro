@@ -68,7 +68,7 @@ variable "ssm_service_connect_name" {
   type        = string
 }
 
-variable "ssm_service_connect_arn" {
-  description = "The SSM parameter name for the Service Connect namespace ARN."
+variable "ssm_vpc_cidr" {
+  description = "The SSM parameter name for the VPC CIDR block."
   type        = string
 }

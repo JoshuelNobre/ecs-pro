@@ -25,6 +25,7 @@ module "service" {
   service_task_count          = var.service_task_count
   service_hosts               = var.service_hosts
   vpc_id                      = data.aws_ssm_parameter.vpc_id.value
+  vpc_cidr                    = data.aws_ssm_parameter.vpc_cidr.value
   private_subnets = [
     data.aws_ssm_parameter.private_subnet_1a.value,
     data.aws_ssm_parameter.private_subnet_1b.value,

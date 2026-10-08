@@ -16,7 +16,6 @@ module "jaeger" {
 
   use_service_connect  = true
   service_connect_name = data.aws_ssm_parameter.service_connect_name.value
-  service_connect_arn  = data.aws_ssm_parameter.service_connect_arn.value
   service_protocol     = "http"
 
   # coletor de traces: recebe dos outros serviços por dentro da rede, então é
@@ -58,6 +57,8 @@ module "jaeger" {
   ]
 
   vpc_id = data.aws_ssm_parameter.vpc.value
+
+  vpc_cidr = data.aws_ssm_parameter.vpc_cidr.value
 
   private_subnets = [
     data.aws_ssm_parameter.private_subnet_1a.value,

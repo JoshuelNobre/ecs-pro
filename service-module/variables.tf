@@ -29,7 +29,7 @@ variable "service_port" {
 }
 
 variable "service_protocol" {
-  description = "The protocol used by the service (e.g., HTTP, HTTPS, TCP)."
+  description = "Application protocol of the port mapping: http, http2 or grpc. Service Connect needs it to parse what it proxies."
   type        = string
   default     = null
 }
@@ -42,12 +42,6 @@ variable "protocol" {
 
 variable "service_connect_name" {
   description = "The name of the service connect."
-  type        = string
-  default     = null
-}
-
-variable "service_connect_arn" {
-  description = "The ARN of the service connect."
   type        = string
   default     = null
 }
@@ -348,4 +342,8 @@ variable "codedeploy_rollback_error_evaluation_periods" {
   type        = number
   description = "How many consecutive periods must breach before the alarm fires."
   default     = 1
+}
+variable "vpc_cidr" {
+  description = "CIDR of the VPC, used to keep service to service traffic inside it."
+  type        = string
 }

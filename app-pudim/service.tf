@@ -36,6 +36,8 @@ module "pudim" {
   container_image = "fidelissauro/pudim:latest"
 
   vpc_id = data.aws_ssm_parameter.vpc_id.value
+
+  vpc_cidr = data.aws_ssm_parameter.vpc_cidr.value
   private_subnets = [
     data.aws_ssm_parameter.private_subnet_1a.value,
     data.aws_ssm_parameter.private_subnet_1b.value,

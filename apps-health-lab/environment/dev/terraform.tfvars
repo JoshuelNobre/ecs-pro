@@ -2,6 +2,7 @@ region       = "us-east-1"
 cluster_name = "jonoma-it"
 
 ssm_vpc_id            = "/jonoma-it/vpc-id"
+ssm_vpc_cidr          = "/jonoma-it/vpc-cidr"
 ssm_private_subnet_1a = "/jonoma-it/private-subnet-1a-id"
 ssm_private_subnet_1b = "/jonoma-it/private-subnet-1b-id"
 ssm_private_subnet_1c = "/jonoma-it/private-subnet-1c-id"
@@ -24,4 +25,3 @@ ingress_domain = "jonoma-it.com"
 # o namespace do Service Connect é separado do Cloud Map: outro domínio, outro
 # mecanismo. O "dns" guarda o nome, o "namespace" guarda o id ns-...
 ssm_service_connect_name = "/jonoma-it/service-connect/dns"
-ssm_service_connect_arn  = "/jonoma-it/service-connect/namespace"

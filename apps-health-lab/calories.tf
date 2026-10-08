@@ -16,7 +16,6 @@ module "calories" {
 
   use_service_connect  = true
   service_connect_name = data.aws_ssm_parameter.service_connect_name.value
-  service_connect_arn  = data.aws_ssm_parameter.service_connect_arn.value
   service_protocol     = "grpc"
 
   # serviço interno: quem o encontra é o Cloud Map, resolvendo direto para o IP
@@ -60,6 +59,8 @@ module "calories" {
   ]
 
   vpc_id = data.aws_ssm_parameter.vpc.value
+
+  vpc_cidr = data.aws_ssm_parameter.vpc_cidr.value
 
   private_subnets = [
     data.aws_ssm_parameter.private_subnet_1a.value,

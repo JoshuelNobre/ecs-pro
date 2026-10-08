@@ -3,12 +3,6 @@ resource "aws_ecs_service" "main" {
   cluster         = var.cluster_name
   task_definition = aws_ecs_task_definition.main.arn
   desired_count   = var.service_task_count
-  #   launch_type     = var.service_launch_type
-
-  #   capacity_provider_strategy {
-  #     capacity_provider = var.service_launch_type
-  #     weight            = 100
-  #   }
 
   dynamic "capacity_provider_strategy" {
     for_each = var.service_launch_type
@@ -90,8 +84,6 @@ resource "aws_ecs_service" "main" {
     security_groups  = [aws_security_group.main.id]
     assign_public_ip = false
   }
-
-  #   platform_version = "LATEST"
 
   lifecycle {
     ignore_changes = [
